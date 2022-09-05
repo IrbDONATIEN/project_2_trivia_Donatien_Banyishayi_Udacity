@@ -1,0 +1,13 @@
+.vscode
+__pycache__
+backend/.env
+backend/__pycache__/
+backend/flaskr/__pycache__/
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+frontend/node_modules/
