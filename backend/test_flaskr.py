@@ -1,4 +1,5 @@
 import os
+from re import search
 import unittest
 import json
 from flask_sqlalchemy import SQLAlchemy
@@ -46,7 +47,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['categories'])
 
     def test_get_specific_categorie(self):
-        res = self.client().get('/categories/4')
+        res = self.client().get('/categories/1')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -118,29 +119,24 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
-
+    
     def test_delete_question_specific(self):
-        res = self.client().delete('/questions/20')
+        res = self.client().delete('/questions/23')
         data = json.loads(res.data)
-
-        question= Question.query.filter(Question.id == 20).one_or_none()
-        if question:
-            self.assertEqual(res.status_code, 200)
-            self.assertEqual(data['success'], True)
-            self.assertEqual(data['deleted'], 20)
-            self.assertTrue(data['total_questions'])
-            self.assertTrue(len(data['questions']))
-            self.assertEqual(question, None)
-        else:
-            self.assertEqual(res.status_code, 422)
-            self.assertEqual(data['success'], False)
-            self.assertEqual(data['message'], 'unprocessable')
-
+        question= Question.query.filter(Question.id==23).first()
+    
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['deleted'], 23)
+        self.assertTrue(data['total_questions'])
+        self.assertTrue(len(data['questions']))
+        self.assertEqual(question, None)
+        
     def test_add_question(self):
         newQuestion = {
-            'question': 'what is your name?',
+            'question': 'who is your name?',
             'answer': 'BANYISHAYI',
-            'difficulty': 1,
+            'difficulty': 2,
             'category': 1,
         }
         res = self.client().post('/questions', json=newQuestion)
@@ -152,11 +148,12 @@ class TriviaTestCase(unittest.TestCase):
     def test_get_question_search_with_results(self):
         res = self.client().post('/questions/searchTerm', json={'searchTerm': 'What'})
         data = json.loads(res.data)
+        
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
-        self.assertEqual(len(data['questions']), 10)
+        self.assertEqual(len(data['questions']),8)
 
     def test_get_question_search_without_results(self):
         res = self.client().post('/questions/searchTerm', json={'searchTerm': 'rdcdrdc'})
@@ -184,21 +181,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
 
-
-    #Test jouer au quiz pas fini
-    def test_play_quiz_not_over(self):
-        new_quiz = {
-            'previous_questions': [],
-            'quiz_category': {'type': 'Art', 'id': 2}
-        }
-
-        res = self.client().post('/quizzes', json=new_quiz)
-        data = json.loads(res.data)
-
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertTrue(data['question'])
-
     #The test quiz is over
     def test_play_quiz_is_over(self):
         new_quiz = {
@@ -211,6 +193,20 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertIsNone(data['question'])
+
+    #Test play a quiz not finish
+    def test_play_quiz_not_over(self):
+        new_quiz = {
+            'previous_questions': [],
+            'quiz_category': {'type': 'Culture', 'id': 1}
+        }
+
+        res = self.client().post('/quizzes', json=new_quiz)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
 
     def test_422_play_quiz(self):
         new_quiz_round = {'previous_questions': []}
